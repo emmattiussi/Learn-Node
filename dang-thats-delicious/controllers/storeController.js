@@ -84,3 +84,11 @@ exports.getStoreBySlug = async (req, res, next) => {
   // 2. Render store page by sending store object
   res.render('store', { title: store.name, store })
 }
+
+exports.getStoresByTag = async (req, res) => {
+  // Get a list of all Stores by creating static method that lives on store model
+  const tags = await Store.getTagsList()
+  const tag = req.params.tag
+  res.render('tag', { tags, title: 'Tags', tag})
+
+}
