@@ -86,9 +86,12 @@ exports.getStoreBySlug = async (req, res, next) => {
 }
 
 exports.getStoresByTag = async (req, res) => {
-  // Get a list of all Stores by creating static method that lives on store model
-  const tags = await Store.getTagsList()
   const tag = req.params.tag
-  res.render('tag', { tags, title: 'Tags', tag})
+  const tagQuery = tag || { $exists: true } // either the selected tag or any store that has a tag property on it.
+  // Get a list of all Stores by creating static method that lives on store model
+  const tagsPromise = Store.getTagsList();
+  const storesPromise = Store.find({ tags: tagQuery })
+  const [tags, stores] = await Promise.all([tagsPromise, storesPromise])
+  res.render('tag', { tags, title: 'Tags', tag, stores })
 
 }
