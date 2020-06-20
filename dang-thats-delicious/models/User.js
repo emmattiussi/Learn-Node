@@ -22,6 +22,12 @@ const userSchema = new Schema({
   }
 })
 
+// Virtual fields aren't stored, but generated on the fly
+userSchema.virtual('gravatar').get(function() {
+  const hash = md5(this.email)
+  return `https://gravatar.com/avatar/${hash}?s=200`
+})
+
 userSchema.plugin(passportLocalMongoose, { usernameField: 'email' }) // Handles authentication.
 userSchema.plugin(mongodbErrorHandler) // Formats error messages nicely
 
