@@ -16,7 +16,6 @@ const multerOptions = {
   }
 }
 
-
 exports.homePage = (req, res) => {
   res.render('index');
 }
@@ -44,6 +43,7 @@ exports.resize = async (req, res, next) => { // Has next because this is a middl
 }
 
 exports.createStore = async (req, res) => {
+  req.body.author = req.user._id; // Gets currently logged in user to populate author field.
   const store = await (new Store(req.body)).save()
   req.flash('success', `Successfully created ${store.name}. Care to leave a review?`);
   res.redirect(`/store/${store.slug}`)
@@ -55,10 +55,17 @@ exports.getStores = async (req, res) => {
   res.render('stores', { title: 'Stores', stores })
 }
 
+const confirmOwner = (store, user) => {
+  if (!store.author.equals(user._id)) {
+    throw Error('You must own a store in order to edit it') // could have also flashed the error and redirected.
+  }
+}
+
 exports.editStore = async (req, res) => {
   // 1. Get specific store to edit
   const store = await Store.findOne({ _id: req.params.id })
-  // 2. Confirm user is owner of store
+  // 2. Confirm user is owner of store. Not middleware because we have to find store before we can do a check.
+  confirmOwner(store, req.user)
   // 3. Render out the edit form so the user can update their store
   res.render('editStore', { title: `Edit ${store.name}`, store })
 }
@@ -78,7 +85,7 @@ exports.updateStore = async (req, res) => {
 
 exports.getStoreBySlug = async (req, res, next) => {
   // 1. Get store by slug from database
-  const store = await Store.findOne({ slug: req.params.slug })
+  const store = await Store.findOne({ slug: req.params.slug }).populate('author')
   // 1b. Handle url error;
   if(!store) return next()
   // 2. Render store page by sending store object
