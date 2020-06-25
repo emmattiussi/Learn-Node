@@ -8,10 +8,12 @@ const multerOptions = {
   storage: multer.memoryStorage(),
   fileFilter(req, file, next) {
     const isPhoto = file.mimetype.startsWith('image/');
-    if(isPhoto) {
+    if (isPhoto) {
       next(null, true);
     } else {
-      next({ message: 'That file type isn\'t allowed' }, false)
+      next({
+        message: 'That file type isn\'t allowed'
+      }, false)
     }
   }
 }
@@ -21,14 +23,16 @@ exports.homePage = (req, res) => {
 }
 
 exports.addStore = (req, res) => {
-  res.render('editStore', { title: 'Add Store' })
+  res.render('editStore', {
+    title: 'Add Store'
+  })
 }
 
 exports.upload = multer(multerOptions).single('photo')
 
 exports.resize = async (req, res, next) => { // Has next because this is a middleware that passes data along, not to the client
   // Check if there is no new file to resize
-  if (!req.file){
+  if (!req.file) {
     next(); // Skip to next middleware
     return;
   }
@@ -52,7 +56,10 @@ exports.createStore = async (req, res) => {
 exports.getStores = async (req, res) => {
   // 1. Query database for list of all stores
   const stores = await Store.find();
-  res.render('stores', { title: 'Stores', stores })
+  res.render('stores', {
+    title: 'Stores',
+    stores
+  })
 }
 
 const confirmOwner = (store, user) => {
@@ -63,18 +70,25 @@ const confirmOwner = (store, user) => {
 
 exports.editStore = async (req, res) => {
   // 1. Get specific store to edit
-  const store = await Store.findOne({ _id: req.params.id })
+  const store = await Store.findOne({
+    _id: req.params.id
+  })
   // 2. Confirm user is owner of store. Not middleware because we have to find store before we can do a check.
   confirmOwner(store, req.user)
   // 3. Render out the edit form so the user can update their store
-  res.render('editStore', { title: `Edit ${store.name}`, store })
+  res.render('editStore', {
+    title: `Edit ${store.name}`,
+    store
+  })
 }
 
 exports.updateStore = async (req, res) => {
   // Set location data to be a Point
   req.body.location.type = 'Point'
   // 1. Find and update the store.
-  const store = await Store.findOneAndUpdate({ _id: req.params.id }, req.body, {
+  const store = await Store.findOneAndUpdate({
+    _id: req.params.id
+  }, req.body, {
     new: true, // returns the new store instead of old one
     runValidators: true // re-runs validators (e.g. checks that name value is present)
   }).exec();
@@ -85,20 +99,51 @@ exports.updateStore = async (req, res) => {
 
 exports.getStoreBySlug = async (req, res, next) => {
   // 1. Get store by slug from database
-  const store = await Store.findOne({ slug: req.params.slug }).populate('author')
+  const store = await Store.findOne({
+    slug: req.params.slug
+  }).populate('author')
   // 1b. Handle url error;
-  if(!store) return next()
+  if (!store) return next()
   // 2. Render store page by sending store object
-  res.render('store', { title: store.name, store })
+  res.render('store', {
+    title: store.name,
+    store
+  })
 }
 
 exports.getStoresByTag = async (req, res) => {
   const tag = req.params.tag
-  const tagQuery = tag || { $exists: true } // either the selected tag or any store that has a tag property on it.
+  const tagQuery = tag || {
+    $exists: true
+  } // either the selected tag or any store that has a tag property on it.
   // Get a list of all Stores by creating static method that lives on store model
   const tagsPromise = Store.getTagsList();
-  const storesPromise = Store.find({ tags: tagQuery })
+  const storesPromise = Store.find({
+    tags: tagQuery
+  })
   const [tags, stores] = await Promise.all([tagsPromise, storesPromise])
-  res.render('tag', { tags, title: 'Tags', tag, stores })
+  res.render('tag', {
+    tags,
+    title: 'Tags',
+    tag,
+    stores
+  })
+}
 
+exports.searchStores = async (req, res) => {
+  const stores = await Store.find({
+    $text: {
+      $search: req.query.q,
+    }
+  }, {
+    score: {
+      $meta: 'textScore'
+    }
+  })
+  .sort({
+    score: { $meta: 'textScore' }
+  })
+  .limit(5)
+  
+  res.json(stores)
 }
