@@ -60,6 +60,8 @@ storeSchema.pre('save', async function(next) {
   next();
 })
 
+// TODO - add another pre-save that uses a node library to sanitise data (remove any HTML/XSS attacks) before saving to database.
+
 // Create static method on storeSchema to help getting tags list
 storeSchema.statics.getTagsList = function() {
   return this.aggregate([
