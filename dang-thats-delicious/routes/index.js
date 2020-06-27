@@ -50,6 +50,8 @@ router.post('/account/reset/:token',
   catchErrors(authController.update)
 )
 
+router.get('/api/stores/near', catchErrors(storeController.mapStores))
+
 // API Endpoints
 
 router.get('/api/search', catchErrors(storeController.searchStores))

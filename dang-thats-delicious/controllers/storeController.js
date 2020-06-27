@@ -144,6 +144,24 @@ exports.searchStores = async (req, res) => {
     score: { $meta: 'textScore' }
   })
   .limit(5)
-  
+
+  res.json(stores)
+}
+
+exports.mapStores = async (req, res) => {
+  const coordinates = [req.query.lng, req.query.lat].map(parseFloat)
+  const query = {
+    location: {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates
+        },
+        $maxDistance: 10000 // in meters, 10km
+      }
+    }
+  }
+  const stores = await Store.find(query).select('slug name description location')
+
   res.json(stores)
 }
