@@ -38,6 +38,9 @@ const storeSchema = new mongoose.Schema({
     ref: 'User',
     required: 'You must supply an author'
   }
+}, {
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true } // virtuals don't get added to JSON and object unless you explicitly call it. 
 });
 
 // Define our indexes
@@ -75,4 +78,10 @@ storeSchema.statics.getTagsList = function() {
   ]);
 }
 
+// Tell it to go off to another model and do a quick query to get all reviews, instead of saving reviews on Store model and Stores on review model.
+storeSchema.virtual('reviews', {
+  ref: 'Review', // what model to link
+  localField: '_id', // which field on our Store needs to match with field on 'foreign' (i.e. review) model. Which field on store?
+  foreignField: 'store' // which field on the review?
+})
 module.exports = mongoose.model('Store', storeSchema)

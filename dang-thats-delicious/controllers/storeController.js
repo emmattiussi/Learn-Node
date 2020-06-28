@@ -102,7 +102,8 @@ exports.getStoreBySlug = async (req, res, next) => {
   // 1. Get store by slug from database
   const store = await Store.findOne({
     slug: req.params.slug
-  }).populate('author')
+  }).populate('author reviews') 
+
   // 1b. Handle url error;
   if (!store) return next()
   // 2. Render store page by sending store object
