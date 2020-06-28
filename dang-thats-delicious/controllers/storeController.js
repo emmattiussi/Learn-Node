@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const Store = mongoose.model('Store')
+const User = mongoose.model('User')
 const multer = require('multer')
 const jimp = require('jimp')
 const uuid = require('uuid')
@@ -168,4 +169,26 @@ exports.mapStores = async (req, res) => {
 
 exports.mapPage = (req, res) => {
   res.render('map', { title: 'Map' })
+}
+
+exports.heartStore = async (req, res) => {
+  const hearts = req.user.hearts.map(obj => obj.toString());
+  const operator = hearts.includes(req.params.id) ? '$pull' : '$addToSet' // not $push because we want the adding to be unique
+  const user = await User
+  .findByIdAndUpdate(req.user._id,
+    { [operator]: { hearts: req.params.id }},
+    { new: true }
+  )
+
+  res.json(user)
+}
+
+exports.getHearts = async (req, res) => {
+  const stores = await Store.find({
+    _id: { $in: req.user.hearts } // find any stores which id is in an array
+  })
+  res.render('stores', {
+    title: 'Hearts',
+    stores
+  })
 }

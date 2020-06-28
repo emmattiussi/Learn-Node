@@ -21,7 +21,13 @@ const userSchema = new Schema({
     trim: true
   },
   resetPasswordToken: String,
-  resetPasswordExpires: Date
+  resetPasswordExpires: Date,
+  hearts: [
+    {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Store'
+    }
+  ]
 })
 
 // Virtual fields aren't stored, but generated on the fly

@@ -17,7 +17,6 @@ function loadPlaces(map, lat = 43.2, lng = -79.8) {
         alert('no places found')
         return;
       }
-
       const bounds = new google.maps.LatLngBounds();
       const infoWindow = new google.maps.InfoWindow()
 
@@ -47,6 +46,7 @@ function loadPlaces(map, lat = 43.2, lng = -79.8) {
       map.setCenter(bounds.getCenter())
       map.fitBounds(bounds)
     })
+    .catch(console.error)
 }
 
 function makeMap(mapDiv) {
