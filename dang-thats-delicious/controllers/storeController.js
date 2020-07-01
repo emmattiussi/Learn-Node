@@ -102,7 +102,7 @@ exports.getStoreBySlug = async (req, res, next) => {
   // 1. Get store by slug from database
   const store = await Store.findOne({
     slug: req.params.slug
-  }).populate('author reviews') 
+  }).populate('author reviews')
 
   // 1b. Handle url error;
   if (!store) return next()
@@ -192,4 +192,9 @@ exports.getHearts = async (req, res) => {
     title: 'Hearts',
     stores
   })
+}
+
+exports.getTopStores = async (req, res) => {
+  const stores = await Store.getTopStores()
+  res.render('topStores', { stores, title: 'Top stores'})
 }

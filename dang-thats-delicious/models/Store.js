@@ -40,7 +40,7 @@ const storeSchema = new mongoose.Schema({
   }
 }, {
   toJSON: { virtuals: true },
-  toObject: { virtuals: true } // virtuals don't get added to JSON and object unless you explicitly call it. 
+  toObject: { virtuals: true } // virtuals don't get added to JSON and object unless you explicitly call it.
 });
 
 // Define our indexes
@@ -78,10 +78,44 @@ storeSchema.statics.getTagsList = function() {
   ]);
 }
 
+storeSchema.statics.getTopStores = function() {
+  return this.aggregate([ // aggregate is a MongoDB function, so it doesn't know about the virtual reviews property.
+    // Lookup stores and populate their reviews
+    { $lookup: {
+      from: 'reviews', localField: '_id', foreignField: 'store', as: 'reviews'
+    }},
+    // filter for only items that have two or more reviews
+    { $match: { 'reviews.1': { $exists: true } }}, // How you access things that are index-based in MongoDB.,
+    // add the average reviews field
+    { $project: {
+      photo: '$$ROOT.photo',
+      name: '$$ROOT.name',
+      slug: '$$ROOT.slug',
+      reviews: '$$ROOT.reviews',
+      averageRating: { $avg: '$reviews.rating' } // $ means field from data being piped in.
+    }},
+    // sort it by our new field, highest reviews first
+    { $sort: {
+      averageRating: -1
+    }},
+    { $limit: 10 }
+    // limit to at most 10.
+  ])
+}
+
 // Tell it to go off to another model and do a quick query to get all reviews, instead of saving reviews on Store model and Stores on review model.
 storeSchema.virtual('reviews', {
   ref: 'Review', // what model to link
   localField: '_id', // which field on our Store needs to match with field on 'foreign' (i.e. review) model. Which field on store?
   foreignField: 'store' // which field on the review?
 })
+
+function autopopulate(next) {
+  this.populate('reviews')
+  next();
+}
+
+storeSchema.pre('find', autopopulate)
+storeSchema.pre('findOne', autopopulate)
+
 module.exports = mongoose.model('Store', storeSchema)
