@@ -14,6 +14,7 @@ router.get('/add',
   storeController.addStore
 );
 router.get('/stores', catchErrors(storeController.getStores));
+router.get('/stores/page/:page', catchErrors(storeController.getStores));
 router.get('/store/:slug', catchErrors(storeController.getStoreBySlug))
 
 router.post('/add',
